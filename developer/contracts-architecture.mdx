@@ -3,5 +3,21 @@ title: "Contracts & Architecture"
 description: "High-level overview of contracts used by Celo Names"
 ---
 
-This page outlines the core contracts (Registry, Registrar/Controller, Resolver) and flows (register, renew, set records). Details coming soon.
+This page outlines the core contracts and flows at a high level.
+
+## Components
+
+- L1Resolver (Ethereum): Supports cross-chain resolution compatibility.
+- L2 Registry / Resolver (Celo): Stores nodes and records (addr, text, avatar).
+- L2 Registrar V1: Registration and renewals using CELO with USD pricing.
+- L2 Registrar V2: Registration and renewals using stablecoins.
+- Self Registrar + SelfStorage: Mint names for verified users via Self program.
+
+## Flows
+
+- Register / Renew: Commit→Register flow, resolver assignment, record setup.
+- Resolve: Namehash lookup via resolver (addr, text records, avatar).
+- Reverse (Primary name): Set reverse record for address → name.
+
+See deployments for addresses and links.
 

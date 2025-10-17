@@ -3,5 +3,146 @@ title: "Indexer (GraphQL)"
 description: "Query names, owners, and records"
 ---
 
-This page will document the GraphQL schema and sample queries to fetch names, owners, and records.
+Endpoint: `https://celo-indexer.namespace.ninja/graphql`
+
+Open the GraphQL playground to introspect the schema and run queries: `https://celo-indexer.namespace.ninja/graphql`.
+
+## Schema (SDL)
+
+Based on current indexer tables, the GraphQL schema exposes names, records, and registrations.
+
+```graphql
+scalar BigInt
+scalar JSON
+
+type AddressRecord {
+  coin: Int!
+  value: String!
+  name: String
+}
+
+type TextRecord {
+  key: String!
+  value: String!
+}
+
+type Contenthash {
+  codec: String!
+  decoded: String!
+  encoded: String!
+}
+
+type Record {
+  id: ID!
+  addresses: [AddressRecord!]!
+  texts: [TextRecord!]!
+  contenthash: Contenthash
+  name: Name
+}
+
+type Registration {
+  id: ID!
+  price_wei: BigInt!
+  tx_hash: String!
+  block_number: BigInt!
+  registrar_contract: String!
+  tx_sender: String!
+  block_timestamp: BigInt!
+  payment_token: String!
+  is_self_claim: Boolean!
+}
+
+type Name {
+  id: ID!               # node (namehash)
+  label: String!
+  full_name: String!
+  expiry: BigInt!
+  owner: String!
+  created_at: BigInt!
+  records: Record
+  registration: Registration
+}
+
+type Query {
+  # Fetch a single name by id (node), label, or full name
+  name(id: ID, label: String, full_name: String): Name
+
+  # List names with pagination
+  names(limit: Int = 25, offset: Int = 0): [Name!]!
+
+  # Search by label prefix
+  searchNames(query: String!, limit: Int = 25, offset: Int = 0): [Name!]!
+
+  # Get recent registrations
+  registrations(limit: Int = 25, offset: Int = 0): [Registration!]!
+
+  # Optional derived field to resolve primary name for an address (if available)
+  primaryName(address: String!): Name
+}
+```
+
+Note: Exact field names may slightly differ depending on the deployed GraphQL schema. Use the playground’s Docs panel to confirm.
+
+## Example queries
+
+```graphql
+# Lookup a name by label
+query NameByLabel($label: String!) {
+  name(label: $label) {
+    id
+    full_name
+    owner
+    expiry
+    records {
+      addresses { coin value name }
+      texts { key value }
+      contenthash { codec decoded }
+    }
+    registration {
+      price_wei
+      payment_token
+      tx_hash
+      block_timestamp
+    }
+  }
+}
+```
+
+```graphql
+# Recent registrations
+query RecentRegistrations($limit: Int = 10) {
+  registrations(limit: $limit) {
+    id
+    tx_hash
+    tx_sender
+    payment_token
+    price_wei
+    block_timestamp
+  }
+}
+```
+
+```graphql
+# Primary name for an address (if supported)
+query PrimaryName($address: String!) {
+  primaryName(address: $address) {
+    id
+    full_name
+    records { texts { key value } }
+  }
+}
+```
+
+```graphql
+# Search by label prefix
+query Search($q: String!) {
+  searchNames(query: $q, limit: 5) {
+    full_name
+    owner
+    expiry
+  }
+}
+```
+
+Playground: `https://celo-indexer.namespace.ninja/graphql`
 
